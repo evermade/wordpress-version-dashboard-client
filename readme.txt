@@ -46,3 +46,9 @@ No screenshots available.
 = 1.0.0 =
 
 Initial version.
+
+== Upgrade Notice ==
+
+= 1.0.0 =
+
+Wait what?!
