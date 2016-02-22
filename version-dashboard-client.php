@@ -78,41 +78,47 @@ function vdc_get_version_information() {
     // Get plugin update info.
     $updatePluginsTransient = get_site_transient('update_plugins');
 
+    // Current version.
+    $currentVersion = isset($coreInformation->version_checked) ? $coreInformation->version_checked : -1;
+
     // Response data.
     $pluginInformation = array(
-        'plugin_count' => count($updatePluginsTransient->response) + count($updatePluginsTransient->no_update),
-        'outdated_plugin_count' => count($updatePluginsTransient->no_update),
-        'core_current_version' => $coreInformation->version_checked,
-        'core_new_version' => count($coreInformation->updates) > 0 ? $coreInformation->updates[0]->version : $coreInformation->version_checked,
-        'core_needs_update' => count($coreInformation->updates) > 0,
+        'plugin_count' => isset($updatePluginsTransient->response) ? count($updatePluginsTransient->response) + count($updatePluginsTransient->no_update) : -1,
+        'outdated_plugin_count' => isset($updatePluginsTransient->no_update) ? count($updatePluginsTransient->no_update) : -1,
+        'core_current_version' => isset($coreInformation->version_checked) ? $coreInformation->version_checked : -1,
+        'core_new_version' => isset($coreInformation->updates) && count($coreInformation->updates) > 0 ? $coreInformation->updates[0]->version : $currentVersion,
+        'core_needs_update' => isset($coreInformation->updates) && count($coreInformation->updates) > 0,
         'plugins' => [],
     );
 
-    // First add outdated plugins.
-    foreach ($updatePluginsTransient->response as $filename => $details) {
-        $pluginData = get_plugin_data(WP_PLUGIN_DIR . '/' . $filename);
-        array_push($pluginInformation['plugins'], array(
-            'name' => $pluginData['Name'],
-            'slug' => $details->slug,
-            'needs_update' => true,
-            'current_version' => $pluginData['Version'],
-            'new_version' => $details->new_version
-        ));
-    }
+    // Go through plugins.
+    if (isset($updatePluginsTransient->response)) {
 
-    // Then add plugins up to date.
-    foreach ($updatePluginsTransient->no_update as $filename => $details) {
-        $pluginData = get_plugin_data(WP_PLUGIN_DIR . '/' . $filename);
-        array_push($pluginInformation['plugins'], array(
-            'name' => $pluginData['Name'],
-            'slug' => $details->slug,
-            'needs_update' => false,
-            'current_version' => $pluginData['Version'],
-            'new_version' => $details->new_version
-        ));
-    }
+        // First add outdated plugins.
+        foreach ($updatePluginsTransient->response as $filename => $details) {
+            $pluginData = get_plugin_data(WP_PLUGIN_DIR . '/' . $filename);
+            array_push($pluginInformation['plugins'], array(
+                'name' => $pluginData['Name'],
+                'slug' => $details->slug,
+                'needs_update' => true,
+                'current_version' => $pluginData['Version'],
+                'new_version' => $details->new_version
+            ));
+        }
 
-    //print_r($pluginInformation);exit;
+        // Then add plugins up to date.
+        foreach ($updatePluginsTransient->no_update as $filename => $details) {
+            $pluginData = get_plugin_data(WP_PLUGIN_DIR . '/' . $filename);
+            array_push($pluginInformation['plugins'], array(
+                'name' => $pluginData['Name'],
+                'slug' => $details->slug,
+                'needs_update' => false,
+                'current_version' => $pluginData['Version'],
+                'new_version' => $details->new_version
+            ));
+        }
+
+    }
 
     return $pluginInformation;
 
